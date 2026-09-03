@@ -151,6 +151,3 @@ chown user:user file # change ownership
 sudo             # run command with admin privileges
 ```
 
-### Practice notes
-
-These are the main commands used in Linux administration and troubleshooting. Practice them regularly so you can explain their purpose clearly in interviews and labs.
