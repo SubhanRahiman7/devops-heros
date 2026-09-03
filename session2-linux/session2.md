@@ -1,161 +1,156 @@
-# Session 2 — Linux Answers
+# Linux Homework Tasks
 
 ## Task 1: Soft Link & Hard Link
 
-### Summary (interview-ready)
-- Soft link (symbolic link): a special file that points to a pathname. Created with `ln -s <target> <linkname>`.
-  - Cross-filesystem capable.
-  - Can point to directories.
-  - If target is removed or moved, the symlink becomes dangling (broken).
-  - `ls -l` shows the arrow and target: `lrwxrwxrwx  1 user group ... link -> target`
+### Difference between soft link and hard link
 
-- Hard link: another directory entry pointing to the same inode as the target. Created with `ln <target> <linkname>`.
-  - Cannot cross filesystems.
-  - Usually cannot create hard links to directories (to prevent loops), except for special admin actions.
-  - Deleting the original filename does not remove the data as long as at least one hard link (directory entry) exists.
-  - `ls -li` shows same inode number for hard-linked files.
+- Soft link (symbolic link):
+  - Created using `ln -s`.
+  - It points to the file path, not the file itself.
+  - If the original file is deleted or moved, the soft link breaks.
+  - It can point to a file on another filesystem.
 
-### Commands and practice
+- Hard link:
+  - Created using `ln`.
+  - It points to the same inode as the original file.
+  - If the original file is deleted, the hard link still works as long as at least one hard link remains.
+  - It usually cannot be created across different filesystems.
+
+### Commands to create both
+
 ```bash
-# prepare
-mkdir -p ~/link-practice && cd ~/link-practice
-echo "hello links" > original.txt
+# create a file
+echo "hello" > original.txt
 
 # create a soft link
 ln -s original.txt soft_link.txt
 
 # create a hard link
 ln original.txt hard_link.txt
-
-ls -li
-# try reading through either link
-cat soft_link.txt
-cat hard_link.txt
-
-# delete original and observe
-rm original.txt
-ls -li
-# hard_link.txt still contains data; soft_link.txt is broken
-cat hard_link.txt
-cat soft_link.txt  # will fail if broken
 ```
 
-Notes for interview: explain inode concept briefly — hard links reference same inode, symlinks reference a path. Mention differences (cross-filesystem, directories, broken links) and typical commands (`ln` vs `ln -s`).
+### Practice creating and deleting
+
+```bash
+ls -l
+ls -li
+
+# delete the original file
+rm original.txt
+
+# check what happens
+cat hard_link.txt
+cat soft_link.txt
+```
+
+### Interview answer
+
+A soft link is like a shortcut to another file, while a hard link is another name for the same file data. Soft links break when the source file is removed, but hard links continue to work because they share the same inode.
 
 ---
 
 ## Task 2: adduser vs useradd
 
-### Differences
+### Difference
+
+- `adduser`:
+  - User-friendly interactive command.
+  - Common on Ubuntu/Debian.
+  - Creates home directory and sets defaults automatically.
+
 - `useradd`:
-  - Low-level tool (binary) for adding users.
-  - Non-interactive by default; needs options (`-m` to create home, `-s` to set shell, etc.).
-  - Present on most distributions.
+  - Low-level command.
+  - More manual and flexible.
+  - Common on many Linux systems.
 
-- `adduser` (Debian/Ubuntu wrapper):
-  - Higher-level friendly script that wraps `useradd` (on Debian-based systems).
-  - Interactive prompts for password, full name, and creates home directory by default.
-  - Uses sane defaults and creates user skeleton files.
+### Preferred command on Ubuntu/Linux
 
-### Which to use on Ubuntu/Linux and why
-- On Ubuntu/Debian, prefer `adduser` for interactive user creation because it is safer and more user-friendly.
-- On other distributions (RHEL/CentOS/Fedora) `adduser` may not exist or is just a symlink; use `useradd` with flags.
+On Ubuntu, `adduser` is preferred because it is simpler, interactive, and creates user accounts with better default settings.
 
-### Example (recommended on Ubuntu)
+### Example: create a test user using the recommended command
+
 ```bash
 sudo adduser devops_test_user
-# follow prompts to set password and details
+```
+
+After running, fill in the prompts for password and user details if needed.
+
+To check the user:
+
+```bash
 id devops_test_user
-# cleanup
-sudo deluser --remove-home devops_test_user
 ```
 
 ---
 
 ## Task 3: journalctl
 
-### What is journalctl used for?
-- `journalctl` is the tool to query and view logs collected by `systemd-journald`.
-- It centralizes kernel logs, system logs, and service logs managed by systemd.
+### What it is used for
 
-### Useful commands
+`journalctl` is used to view logs from `systemd` and services. It helps administrators check system events, service logs, kernel messages, and boot logs.
+
+### View system and service logs
+
 ```bash
-# show entire journal (paged)
+# view all logs
 journalctl
 
-# show logs from current boot only
+# view logs from the current boot
 journalctl -b
 
-# follow (like tail -f)
+# follow logs live
 journalctl -f
 
-# show logs for a specific service
+# view logs for a specific service
 journalctl -u ssh.service
 
-# show last N lines for a service
-journalctl -u ssh.service -n 100 --no-pager
-
-# show kernel messages only
-journalctl -k
-
-# show logs between two dates
-journalctl --since "2026-09-03" --until "2026-09-04 00:00"
-
-# show logs with priority (e.g., err and above)
-journalctl -p err
+# view the last 50 lines for a service
+journalctl -u ssh.service -n 50 --no-pager
 ```
 
-### Practice
-- Try `sudo journalctl -u systemd-resolved` (or any installed service) and use `-f` to follow while restarting the service in another terminal to observe logs in real time.
+### Example service log check
 
----
-
-## Task 4: Linux Command Cheat Sheet (important commands & purpose)
-
-Below are concise commands you should practice and be able to explain briefly.
-
-- `pwd` — print working directory
-- `ls -lah` — list files with human-readable sizes and hidden files
-- `cd <dir>` — change directory
-- `mkdir -p <dir>` — create directory and parents
-- `touch <file>` — create empty file or update timestamp
-- `cp <src> <dst>` — copy file
-- `mv <src> <dst>` — move/rename file
-- `rm <file>` / `rm -rf <dir>` — remove file/directory
-- `cat <file>` — show file content
-- `less <file>` — view file paged
-- `head` / `tail -n 100` — show start or end of files
-- `grep -i "pattern" <file>` — search text in files
-- `find . -name "*.sh"` — find files by name
-- `chmod +x script.sh` — make script executable
-- `chown user:group file` — change owner and group
-- `df -h` — disk usage per filesystem (human readable)
-- `du -sh <dir>` — disk usage of a directory (summary)
-- `free -h` — memory usage
-- `uname -a` — kernel and system information
-- `ps aux` — list processes
-- `ps -ef` — another full-format process listing
-- `top` / `htop` — interactive process viewer
-- `systemctl status <service>` — check systemd service status
-- `journalctl -u <service>` — view service logs (systemd)
-- `ssh user@host` — connect to remote host
-- `scp` / `rsync` — file copy between hosts
-- `iptables` / `ufw` / `firewalld` — basic firewall management (distro dependent)
-
----
-
-## Quick practice tasks (one-liners)
 ```bash
-# find large files
-sudo find / -type f -size +100M -exec ls -lh {} \; | awk '{ print $NF, $5 }'
-
-# check listening ports
-ss -tulnp
-
-# disk summary of current directory
-du -sh .
+sudo journalctl -u nginx.service
 ```
+
+This shows the logs of the Nginx service.
 
 ---
 
-If you want these answers split into smaller files or expanded with screenshots/command outputs, tell me which format and I will update accordingly.
+## Task 4: Linux Command Cheat Sheet
+
+### Important commands and their purpose
+
+```bash
+pwd              # print working directory
+ls               # list files
+ls -l            # list files with details
+ls -a            # show hidden files
+cd               # change directory
+mkdir dir_name   # create a directory
+touch file.txt   # create a file
+cp src dest      # copy files
+mv src dest      # move or rename files
+rm file.txt      # remove a file
+rm -r dir_name   # remove a directory
+cat file.txt     # view file contents
+head file.txt    # first lines of a file
+tail file.txt    # last lines of a file
+grep "text" file.txt   # search text in a file
+find . -name "*.txt"  # find files
+df -h            # check disk space
+du -sh dir       # check directory size
+ps aux           # view running processes
+top              # monitor processes
+whoami           # current user
+hostname         # machine name
+uname -a         # system information
+chmod +x script.sh   # make script executable
+chown user:user file # change ownership
+sudo             # run command with admin privileges
+```
+
+### Practice notes
+
+These are the main commands used in Linux administration and troubleshooting. Practice them regularly so you can explain their purpose clearly in interviews and labs.
